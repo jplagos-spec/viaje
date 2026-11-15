@@ -8,7 +8,7 @@
  */
 
 // El mismo ID de cliente que va en config.js de la página.
-var GOOGLE_CLIENT_ID = 'PEGAR_AQUI_EL_ID_DE_CLIENTE';
+var GOOGLE_CLIENT_ID = '496831651340-pv5r04959eofha2iqjrbe9l1q570e7di.apps.googleusercontent.com';
 
 // Columnas que no se envían a la página.
 var OCULTAS = { Traslados: ['Reserva'] };
