@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Viaje Febrero 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--ink:#12233D;--muted:#51607A;--ground:#F3F6FA;--card:#FFFFFF;--line:#D5DEEC;--warn:#B23A06;--warn-bg:#FFE8D6;--warn-fg:#7A2E00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.4}
+h1,h2,h3,p,ul,dl,dd{margin:0}
+ul{list-style:none;padding:0}
+h1,h2,.big{font-family:'Bricolage Grotesque',Inter,sans-serif;font-weight:700}
+h2{font-size:1.5rem;line-height:1.15}
+a{color:#0B3A75}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:20px}
+.card{background:var(--card);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.muted{color:var(--muted)}
+.hero{background:var(--ink);color:#fff;border-radius:20px;padding:28px 24px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;justify-content:space-between}
+.hero-text{display:flex;flex-direction:column;gap:8px;min-width:0}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FFD9B8}
+.hero h1{font-size:2.5rem;line-height:1.05}
+.hero-sub{color:#D5DEEC}
+.count{background:#FFD9B8;color:#7A2E00;border-radius:16px;padding:12px 18px;display:flex;flex-direction:column;gap:2px}
+.count small{font-size:13px;font-weight:600}
+.count .big{font-size:2rem;line-height:1}
+.route{flex-direction:row;flex-wrap:wrap;gap:8px;align-items:center;padding:16px 20px;font-size:15px;font-weight:600}
+.pill{border-radius:999px;padding:6px 12px;border:1.5px solid transparent}
+.arrow{color:var(--muted)}
+.cols{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.cols>.cal{flex:2 1 420px}
+.cols>.detail{flex:1 1 300px}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 12px}
+.hint{font-size:14px;color:var(--muted)}
+.grid7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow{font-size:12px;font-weight:600;color:var(--muted);text-align:center}
+.day{min-height:64px;border-radius:10px;padding:6px 2px;display:flex;flex-direction:column;gap:4px;align-items:center;border:1.5px solid transparent;background:transparent;color:#5F6B80;cursor:pointer}
+.day:disabled{cursor:default}
+.day[aria-pressed="true"]{outline:3px solid var(--warn);outline-offset:2px}
+.day.today .num{text-decoration:underline;text-underline-offset:3px}
+.day .num{font-size:15px;font-weight:600;line-height:1}
+.day .mon{font-size:10px;line-height:1;min-height:10px}
+.day .lab{font-size:11px;font-weight:600;line-height:1.1}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:4px;border:1.5px solid transparent}
+.chip{align-self:flex-start;font-size:13px;font-weight:600;border-radius:999px;padding:5px 12px;border:1.5px solid transparent}
+.detail dl{display:flex;flex-direction:column;gap:12px}
+.detail dt,.label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.item{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.item.open{border:1.5px dashed #7C8AA0}
+.item .title{font-size:15px;font-weight:600}
+.item .when{font-size:12px;font-weight:600;color:var(--muted)}
+.item .route-t{font-size:17px;font-weight:600}
+.item .sub{font-size:14px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;font-weight:600}
+.tag{background:#E8EDF5;color:var(--ink);border-radius:6px;padding:3px 8px}
+.tag.warn{background:var(--warn-bg);color:var(--warn-fg)}
+.tag.prog{background:#CFE3FF;color:#0B3A75}
+.counter{font-size:14px;font-weight:600;color:var(--warn)}
+.log{display:flex;flex-direction:column;gap:10px}
+.gate{max-width:440px;margin:12vh auto 0;align-items:center;text-align:center;padding:32px 24px;gap:16px}
+.gate h1{font-size:2rem;line-height:1.1}
+.btn{min-height:44px;border-radius:999px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);font-size:15px;font-weight:600;padding:8px 18px;cursor:pointer}
+.foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<main id="gate" class="wrap">
+  <section class="card gate">
+    <p class="eyebrow" style="color:var(--warn)">Vacaciones en familia</p>
+    <h1>Viaje Febrero 2027</h1>
+    <p id="gate-msg" class="muted">Cargando…</p>
+    <div id="gate-login" hidden></div>
+    <button id="gate-retry" class="btn" type="button" hidden>Probar de nuevo</button>
+    <button id="gate-switch" class="btn" type="button" hidden>Entrar con otra cuenta</button>
+  </section>
+</main>
+
+<main id="app" class="wrap" hidden>
+  <header class="hero">
+    <div class="hero-text">
+      <p class="eyebrow">Vacaciones en familia</p>
+      <h1>Viaje Febrero 2027</h1>
+      <p id="hero-sub" class="hero-sub"></p>
+    </div>
+    <div class="count"><small id="count-small"></small><span id="count-big" class="big"></span></div>
+  </header>
+
+  <section id="route" class="card route" aria-label="Ruta"></section>
+
+  <div class="cols">
+    <section class="card cal">
+      <div class="head"><h2>Calendario</h2><span class="hint">Toca un día para ver el detalle</span></div>
+      <div class="grid7 dow" aria-hidden="true"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+      <div id="cal" class="grid7"></div>
+      <div id="legend" class="legend"></div>
+    </section>
+    <section id="detail" class="card detail" aria-live="polite"></section>
+  </div>
+
+  <section class="card">
+    <div class="head"><h2>Pendientes</h2><span id="pend-count" class="counter"></span></div>
+    <ul id="pend" class="cards"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Traslados</h2>
+    <div id="tras" class="cards"></div>
+  </section>
+
+  <section class="card">
+    <h2>Bitácora</h2>
+    <div id="bita" class="log"></div>
+  </section>
+
+  <footer class="foot">
+    <span id="who"></span>
+    <button id="logout" class="btn" type="button">Salir</button>
+  </footer>
+</main>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.VIAJE_CONFIG || {};
+  var CASA = CFG.CASA || 'Santiago';
+  var TOKEN_KEY = 'viaje_token';
+  var SEM = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  var MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  var VUELO = { name: 'En vuelo', code: '', bg: '#12233D', fg: '#FFFFFF', line: '#12233D' };
+  var PEND = { name: 'Por definir', code: '?', bg: '#FFFFFF', fg: '#51607A', line: '#7C8AA0', dashed: true };
+  var KNOWN = [
+    { re: /santiago/i, code: 'SCL', bg: '#12233D', fg: '#FFFFFF' },
+    { re: /s[ií]dney|sydney/i, code: 'SYD', bg: '#CFE3FF', fg: '#0B3A75' },
+    { re: /singap/i, code: 'SIN', bg: '#FFD9B8', fg: '#7A2E00' },
+    { re: /borneo|kinabalu|kuching|sandakan|brun[eé]i/i, code: 'BOR', bg: '#CDEBC5', fg: '#1E5A16' },
+    { re: /hong\s*kong/i, code: 'HKG', bg: '#0F766E', fg: '#FFFFFF' },
+    { re: /shenzhen|shenzen/i, code: 'SZX', bg: '#5B3A9E', fg: '#FFFFFF' }
+  ];
+  var EXTRA = [
+    { bg: '#F6D6E8', fg: '#7A1C4B' }, { bg: '#FFF0B3', fg: '#5C4400' },
+    { bg: '#3D4A8F', fg: '#FFFFFF' }, { bg: '#D9D4F5', fg: '#3B2A7A' }, { bg: '#8A3B12', fg: '#FFFFFF' }
+  ];
+  var extraUsed = {};
+  var state = { data: null, days: [], byKey: {}, sel: null, email: '' };
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+  function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+  function plain(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+  function styleFor(name) {
+    for (var i = 0; i < KNOWN.length; i++) {
+      if (KNOWN[i].re.test(name)) return { name: name, code: KNOWN[i].code, bg: KNOWN[i].bg, fg: KNOWN[i].fg, line: KNOWN[i].bg };
+    }
+    var k = plain(name).toLowerCase();
+    if (!extraUsed[k]) extraUsed[k] = EXTRA[Object.keys(extraUsed).length % EXTRA.length];
+    return { name: name, code: plain(name).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase(), bg: extraUsed[k].bg, fg: extraUsed[k].fg, line: extraUsed[k].bg };
+  }
+  function paint(node, st) {
+    node.style.background = st.bg;
+    node.style.color = st.fg;
+    node.style.borderColor = st.line;
+    node.style.borderStyle = st.dashed ? 'dashed' : 'solid';
+  }
+
+  function parseDate(s) {
+    var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s || '').trim());
+    if (!m) return null;
+    return new Date(+m[3], +m[2] - 1, +m[1]);
+  }
+  function keyOf(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function longDate(d) { return SEM[d.getDay()] + ' ' + d.getDate() + ' de ' + MES[d.getMonth()]; }
+  function shortDate(d) { return SEM[d.getDay()].slice(0, 3) + ' ' + d.getDate() + ' ' + MES[d.getMonth()].slice(0, 3); }
+  function isHome(p) { return plain(p).toLowerCase() === plain(CASA).toLowerCase(); }
+  function isFlight(p) { return /en vuelo/i.test(p); }
+
+  /** Lugar principal de un día a partir de la columna Ciudad. */
+  function placeOf(ciudad) {
+    var txt = String(ciudad || '').trim();
+    if (!txt || /por definir/i.test(txt)) return { st: PEND, label: '?', place: null };
+    var parts = txt.split('→').map(function (p) { return p.trim(); }).filter(Boolean);
+    var last = parts[parts.length - 1];
+    var homeCode = styleFor(CASA).code;
+    if (parts.length > 1 && isHome(last)) return { st: VUELO, label: '→' + homeCode, place: null };
+    var place = null;
+    for (var i = parts.length - 1; i >= 0; i--) {
+      if (!isFlight(parts[i]) && !isHome(parts[i])) { place = parts[i]; break; }
+    }
+    if (!place) return { st: VUELO, label: isHome(parts[0]) ? homeCode + '→' : 'Vuelo', place: null };
+    var st = styleFor(place);
+    return { st: st, label: st.code, place: place };
+  }
+
+  function prepare(data) {
+    state.days = [];
+    state.byKey = {};
+    (data.calendario || []).forEach(function (row) {
+      var d = parseDate(row['Fecha']);
+      if (!d) return;
+      var info = placeOf(row['Ciudad']);
+      var day = { date: d, key: keyOf(d), row: row, st: info.st, label: info.label, place: info.place };
+      state.days.push(day);
+      state.byKey[day.key] = day;
+    });
+    state.days.sort(function (a, b) { return a.date - b.date; });
+  }
+
+  function renderHero() {
+    var days = state.days;
+    if (!days.length) { $('hero-sub').textContent = 'Todavía no hay días cargados.'; return; }
+    var first = days[0].date, last = days[days.length - 1].date;
+    var names = [];
+    days.forEach(function (d) { if (d.place && names.indexOf(d.place) === -1) names.push(d.place); });
+    var lugares = names.length > 1 ? names.slice(0, -1).join(', ') + ' y ' + names[names.length - 1] : names.join('');
+    $('hero-sub').textContent = first.getDate() + ' de ' + MES[first.getMonth()] + ' al ' + last.getDate() + ' de ' + MES[last.getMonth()] + (lugares ? ' · ' + lugares : '');
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var DAY = 86400000;
+    if (today < first) {
+      var n = Math.round((first - today) / DAY);
+      $('count-small').textContent = n === 1 ? 'Falta' : 'Faltan';
+      $('count-big').textContent = n + (n === 1 ? ' día' : ' días');
+    } else if (today <= last) {
+      $('count-small').textContent = 'Hoy es el';
+      $('count-big').textContent = 'Día ' + (Math.round((today - first) / DAY) + 1) + ' de ' + days.length;
+    } else {
+      $('count-small').textContent = 'Viaje';
+      $('count-big').textContent = 'Terminado';
+    }
+  }
+
+  function renderRoute() {
+    var box = $('route'); clear(box);
+    var seq = [CASA];
+    state.days.forEach(function (d) { if (d.place && seq[seq.length - 1] !== d.place) seq.push(d.place); });
+    seq.push(CASA);
+    seq.forEach(function (name, i) {
+      if (i) { var a = el('span', 'arrow', '→'); a.setAttribute('aria-hidden', 'true'); box.appendChild(a); }
+      var p = el('span', 'pill', name); paint(p, styleFor(name)); box.appendChild(p);
+    });
+  }
+
+  function renderCalendar() {
+    var box = $('cal'); clear(box);
+    var days = state.days;
+    if (!days.length) return;
+    var start = new Date(days[0].date), end = new Date(days[days.length - 1].date);
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    end.setDate(end.getDate() + ((7 - end.getDay()) % 7));
+    var todayKey = keyOf(new Date());
+    for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      var key = keyOf(d), day = state.byKey[key];
+      var b = el('button', 'day' + (key === todayKey ? ' today' : ''));
+      b.type = 'button';
+      b.appendChild(el('span', 'num', d.getDate()));
+      var showMon = day && (day === days[0] || d.getDate() === 1);
+      b.appendChild(el('span', 'mon', showMon ? MES[d.getMonth()].slice(0, 3) : ''));
+      b.appendChild(el('span', 'lab', day ? day.label : ''));
+      if (day) {
+        paint(b, day.st);
+        b.setAttribute('aria-pressed', key === state.sel ? 'true' : 'false');
+        b.setAttribute('aria-label', longDate(d) + ', ' + (day.row['Ciudad'] || 'por definir'));
+        b.addEventListener('click', select.bind(null, key));
+      } else {
+        b.disabled = true;
+        b.setAttribute('aria-label', longDate(d) + ', fuera del viaje');
+      }
+      box.appendChild(b);
+    }
+    var legend = $('legend'); clear(legend);
+    var seen = {}, items = [];
+    days.forEach(function (day) {
+      var id = day.place || day.st.name;
+      if (seen[id]) return; seen[id] = true;
+      items.push({ st: day.st, text: day.place ? day.st.code + ' ' + day.place : day.st.name });
+    });
+    items.forEach(function (it) {
+      var s = el('span'); var sw = el('span', 'sw'); sw.setAttribute('aria-hidden', 'true'); paint(sw, it.st);
+      s.appendChild(sw); s.appendChild(document.createTextNode(it.text)); legend.appendChild(s);
+    });
+  }
+
+  function field(dl, label, value) {
+    var w = el('div'); w.appendChild(el('dt', null, label)); w.appendChild(el('dd', null, value)); dl.appendChild(w);
+  }
+
+  function renderDetail() {
+    var box = $('detail'); clear(box);
+    var day = state.byKey[state.sel];
+    if (!day) { box.appendChild(el('p', 'muted', 'Elige un día del calendario.')); return; }
+    var row = day.row;
+    var top = el('div'); top.style.display = 'flex'; top.style.flexDirection = 'column'; top.style.gap = '8px';
+    var chip = el('span', 'chip', row['Ciudad'] || 'Por definir'); paint(chip, day.st);
+    top.appendChild(chip); top.appendChild(el('h2', null, longDate(day.date)));
+    box.appendChild(top);
+    var dl = el('dl');
+    field(dl, 'Plan del día', row['Plan del día'] || 'Por definir');
+    field(dl, 'Traslado', row['Transporte'] || 'Sin traslados');
+    field(dl, 'Dónde dormimos', row['Alojamiento'] || 'Sin dato');
+    if (row['Notas']) field(dl, 'Notas', row['Notas']);
+    box.appendChild(dl);
+    var entries = (state.data.bitacora || []).filter(function (e) {
+      var d = parseDate(e['Fecha']); return d && keyOf(d) === day.key;
+    });
+    if (entries.length) {
+      box.appendChild(el('p', 'label', 'Lo que pasó'));
+      entries.forEach(function (e) { box.appendChild(logItem(e, false)); });
+    }
+  }
+
+  function select(key) {
+    state.sel = key;
+    var btns = $('cal').querySelectorAll('button.day:not(:disabled)');
+    var i = 0;
+    state.days.forEach(function (day) {
+      if (btns[i]) btns[i].setAttribute('aria-pressed', day.key === key ? 'true' : 'false');
+      i++;
+    });
+    renderDetail();
+  }
+
+  function renderPend() {
+    var box = $('pend'); clear(box);
+    var open = (state.data.pendientes || []).filter(function (p) { return p['Tema'] && !/^listo$/i.test(p['Estado'] || ''); });
+    $('pend-count').textContent = open.length ? open.length + ' por resolver' : '';
+    if (!open.length) { box.appendChild(el('li', 'muted', 'No hay pendientes. Todo listo.')); return; }
+    open.forEach(function (p) {
+      var li = el('li', 'item');
+      li.appendChild(el('span', 'title', p['Tema']));
+      var tags = el('span', 'tags');
+      if (p['Categoría']) tags.appendChild(el('span', 'tag', p['Categoría']));
+      var estado = p['Estado'] || 'Pendiente';
+      tags.appendChild(el('span', 'tag ' + (/en curso/i.test(estado) ? 'prog' : 'warn'), estado));
+      if (p['Responsable']) tags.appendChild(el('span', 'tag', p['Responsable']));
+      if (p['Fecha límite']) tags.appendChild(el('span', 'tag', 'Hasta ' + p['Fecha límite']));
+      li.appendChild(tags);
+      if (p['Notas']) li.appendChild(el('span', 'sub', p['Notas']));
+      box.appendChild(li);
+    });
+  }
+
+  function renderTras() {
+    var box = $('tras'); clear(box);
+    var rows = (state.data.traslados || []).filter(function (t) { return t['Origen'] || t['Destino']; });
+    if (!rows.length) { box.appendChild(el('p', 'muted', 'Todavía no hay traslados cargados.')); return; }
+    rows.forEach(function (t) {
+      var ok = /^confirmado$/i.test(t['Estado'] || '');
+      var a = el('article', 'item' + (ok ? '' : ' open'));
+      var d = parseDate(t['Fecha salida']), d2 = parseDate(t['Fecha llegada']);
+      var when = [d ? shortDate(d) : 'Fecha por definir'];
+      if (t['Vuelo']) when.push(t['Vuelo']);
+      a.appendChild(el('span', 'when', when.join(' · ')));
+      a.appendChild(el('span', 'route-t', (t['Origen'] || '?') + ' → ' + (t['Destino'] || '?')));
+      if (t['Hora salida']) {
+        var line = 'Sale ' + t['Hora salida'];
+        if (t['Hora llegada']) {
+          line += ' · llega ' + t['Hora llegada'];
+          if (d && d2 && keyOf(d) !== keyOf(d2)) line += ' del ' + d2.getDate() + ' ' + MES[d2.getMonth()].slice(0, 3);
+        }
+        a.appendChild(el('span', 'sub', line));
+      } else {
+        a.appendChild(el('span', 'sub', 'Horario por confirmar'));
+      }
+      if (t['Duración']) a.appendChild(el('span', 'sub', t['Duración'] + ' de viaje'));
+      if (!ok && t['Estado']) { var tg = el('span', 'tags'); tg.appendChild(el('span', 'tag warn', t['Estado'])); a.appendChild(tg); }
+      box.appendChild(a);
+    });
+  }
+
+  function logItem(e, withDate) {
+    var it = el('article', 'item');
+    var d = parseDate(e['Fecha']);
+    var head = [];
+    if (withDate && d) head.push(shortDate(d));
+    if (e['Hora']) head.push(e['Hora']);
+    if (e['Ciudad']) head.push(e['Ciudad']);
+    if (head.length) it.appendChild(el('span', 'when', head.join(' · ')));
+    it.appendChild(el('span', null, e['Qué pasó'] || ''));
+    if (e['Quién lo contó']) it.appendChild(el('span', 'sub', 'Lo contó ' + e['Quién lo contó']));
+    var foto = e['Foto (link)'] || '';
+    if (/^https:\/\//i.test(foto)) {
+      var a = el('a', null, 'Ver foto'); a.href = foto; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      it.appendChild(a);
+    }
+    return it;
+  }
+
+  function renderBita() {
+    var box = $('bita'); clear(box);
+    var rows = (state.data.bitacora || []).filter(function (e) { return e['Qué pasó']; });
+    if (!rows.length) { box.appendChild(el('p', 'muted', 'Aquí va a ir apareciendo lo que pase cada día del viaje.')); return; }
+    rows.slice().reverse().forEach(function (e) { box.appendChild(logItem(e, true)); });
+  }
+
+  function renderAll(data) {
+    state.data = data;
+    prepare(data);
+    var todayKey = keyOf(new Date());
+    state.sel = state.byKey[todayKey] ? todayKey : (state.days[0] ? state.days[0].key : null);
+    renderHero(); renderRoute(); renderCalendar(); renderDetail(); renderPend(); renderTras(); renderBita();
+    $('who').textContent = state.email ? 'Entraste como ' + state.email : '';
+    $('gate').hidden = true;
+    $('app').hidden = false;
+  }
+
+  /* ---------- Acceso ---------- */
+
+  function gate(msg, opts) {
+    opts = opts || {};
+    $('app').hidden = true;
+    $('gate').hidden = false;
+    $('gate-msg').textContent = msg;
+    $('gate-login').hidden = !opts.login;
+    $('gate-retry').hidden = !opts.retry;
+    $('gate-switch').hidden = !opts.switchAccount;
+  }
+  function getToken() {
+    try {
+      var t = sessionStorage.getItem(TOKEN_KEY);
+      if (!t) return null;
+      var payload = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload.exp || payload.exp * 1000 < Date.now() + 30000) return null;
+      return t;
+    } catch (e) { return null; }
+  }
+  function setToken(t) { try { if (t) sessionStorage.setItem(TOKEN_KEY, t); else sessionStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+
+  function showLogin(msg) {
+    gate(msg || 'Entra con tu cuenta de Google para ver el programa.', { login: true });
+    var box = $('gate-login');
+    if (window.google && google.accounts && google.accounts.id && !box.firstChild) {
+      google.accounts.id.renderButton(box, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', locale: 'es' });
+    }
+  }
+
+  function load(token) {
+    gate('Cargando el programa…');
+    fetch(CFG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ credential: token })
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data && data.ok) { state.email = data.correo || ''; renderAll(data); return; }
+      if (data && data.error === 'no_autorizado') {
+        setToken(null);
+        gate('La cuenta ' + (data.correo || '') + ' no tiene acceso a esta página. Pide que la agreguen a la lista.', { switchAccount: true });
+        return;
+      }
+      setToken(null);
+      showLogin('La sesión venció. Entra de nuevo.');
+    }).catch(function () {
+      gate('No se pudo cargar el programa. Revisa tu conexión.', { retry: true });
+    });
+  }
+
+  function onCredential(resp) {
+    if (!resp || !resp.credential) return;
+    setToken(resp.credential);
+    load(resp.credential);
+  }
+
+  function start() {
+    if (!CFG.APPS_SCRIPT_URL || !CFG.GOOGLE_CLIENT_ID) {
+      gate('La página todavía no está conectada con el programa del viaje. Falta terminar la configuración.');
+      return;
+    }
+    $('gate-retry').addEventListener('click', function () { if (!window.google) { location.reload(); return; } var t = getToken(); if (t) load(t); else showLogin(); });
+    $('gate-switch').addEventListener('click', function () { showLogin(); });
+    $('logout').addEventListener('click', function () {
+      setToken(null);
+      try { google.accounts.id.disableAutoSelect(); } catch (e) {}
+      state.data = null;
+      showLogin('Saliste de la página.');
+    });
+    var s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = function () {
+      google.accounts.id.initialize({ client_id: CFG.GOOGLE_CLIENT_ID, callback: onCredential, auto_select: true });
+      var t = getToken();
+      if (t) load(t); else showLogin();
+    };
+    s.onerror = function () { gate('No se pudo cargar el inicio de sesión de Google. Revisa tu conexión.', { retry: true }); };
+    document.head.appendChild(s);
+    gate('Cargando…');
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>
