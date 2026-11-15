@@ -48,11 +48,13 @@ button{font-family:inherit}
 .day .num{font-size:15px;font-weight:600;line-height:1}
 .day .mon{font-size:10px;line-height:1;min-height:10px}
 .day .lab{font-size:11px;font-weight:600;line-height:1.1}
+.day.with .num::after{content:" \2022"}
 .legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px;color:var(--muted)}
 .legend span{display:flex;align-items:center;gap:6px}
 .sw{width:14px;height:14px;border-radius:4px;border:1.5px solid transparent}
 .chip{align-self:flex-start;font-size:13px;font-weight:600;border-radius:999px;padding:5px 12px;border:1.5px solid transparent}
 .detail dl{display:flex;flex-direction:column;gap:12px}
+.detail dd,.item .sub{white-space:pre-line}
 .detail dt,.label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
 .item{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
@@ -215,7 +217,7 @@ button{font-family:inherit}
       var d = parseDate(row['Fecha']);
       if (!d) return;
       var info = placeOf(row['Ciudad']);
-      var day = { date: d, key: keyOf(d), row: row, st: info.st, label: info.label, place: info.place };
+      var day = { date: d, key: keyOf(d), row: row, st: info.st, label: info.label, place: info.place, con: row['Acompañan'] || '' };
       state.days.push(day);
       state.byKey[day.key] = day;
     });
@@ -266,7 +268,7 @@ button{font-family:inherit}
     var todayKey = keyOf(new Date());
     for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       var key = keyOf(d), day = state.byKey[key];
-      var b = el('button', 'day' + (key === todayKey ? ' today' : ''));
+      var b = el('button', 'day' + (key === todayKey ? ' today' : '') + (day && day.con ? ' with' : ''));
       b.type = 'button';
       b.appendChild(el('span', 'num', d.getDate()));
       var showMon = day && (day === days[0] || d.getDate() === 1);
@@ -275,7 +277,7 @@ button{font-family:inherit}
       if (day) {
         paint(b, day.st);
         b.setAttribute('aria-pressed', key === state.sel ? 'true' : 'false');
-        b.setAttribute('aria-label', longDate(d) + ', ' + (day.row['Ciudad'] || 'por definir'));
+        b.setAttribute('aria-label', longDate(d) + ', ' + (day.row['Ciudad'] || 'por definir') + (day.con ? ', con ' + day.con : ''));
         b.addEventListener('click', select.bind(null, key));
       } else {
         b.disabled = true;
@@ -290,10 +292,13 @@ button{font-family:inherit}
       if (seen[id]) return; seen[id] = true;
       items.push({ st: day.st, text: day.place ? day.st.code + ' ' + day.place : day.st.name });
     });
+    var cons = [];
+    days.forEach(function (day) { if (day.con && cons.indexOf(day.con) === -1) cons.push(day.con); });
     items.forEach(function (it) {
       var s = el('span'); var sw = el('span', 'sw'); sw.setAttribute('aria-hidden', 'true'); paint(sw, it.st);
       s.appendChild(sw); s.appendChild(document.createTextNode(it.text)); legend.appendChild(s);
     });
+    if (cons.length) legend.appendChild(el('span', null, '\u2022 Con ' + cons.join(', ')));
   }
 
   function field(dl, label, value) {
@@ -313,6 +318,7 @@ button{font-family:inherit}
     field(dl, 'Plan del día', row['Plan del día'] || 'Por definir');
     field(dl, 'Traslado', row['Transporte'] || 'Sin traslados');
     field(dl, 'Dónde dormimos', row['Alojamiento'] || 'Sin dato');
+    if (day.con) field(dl, 'Con quién', day.con);
     if (row['Notas']) field(dl, 'Notas', row['Notas']);
     box.appendChild(dl);
     var entries = (state.data.bitacora || []).filter(function (e) {
