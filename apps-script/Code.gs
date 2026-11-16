@@ -35,7 +35,8 @@ function doPost(e) {
       calendario: leerPestana_('Calendario'),
       traslados: leerPestana_('Traslados'),
       pendientes: leerPestana_('Pendientes'),
-      bitacora: leerPestana_('Bitácora')
+      bitacora: leerPestana_('Bitácora'),
+      hojas: leerTodas_()
     });
   } catch (err) {
     return responder_({ ok: false, error: 'error_interno' });
@@ -65,6 +66,19 @@ function estaAutorizado_(correo) {
     if (String(correos[i][0]).trim().toLowerCase() === correo) return true;
   }
   return false;
+}
+
+// Pestañas que nunca se envían a la página.
+var NO_ENVIAR = ['Accesos', 'Léeme', 'Listas'];
+
+/** Lee todas las pestañas de datos, para que las nuevas lleguen sin cambiar el script. */
+function leerTodas_() {
+  var todas = {};
+  libro_().getSheets().forEach(function (hoja) {
+    var nombre = hoja.getName();
+    if (NO_ENVIAR.indexOf(nombre) === -1) todas[nombre] = leerPestana_(nombre);
+  });
+  return todas;
 }
 
 /** Lee una pestaña como lista de objetos, usando la fila 1 como nombres. */
