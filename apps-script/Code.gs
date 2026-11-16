@@ -1,14 +1,18 @@
 /**
  * Viaje Febrero 2027: entrega los datos del Sheet a la página del viaje.
  *
- * Va ligado al Sheet (Extensiones > Apps Script) y se implementa como
- * aplicación web: Ejecutar como "Yo", acceso "Cualquier usuario".
+ * Es un proyecto independiente (script.google.com) en una cuenta que tenga
+ * el Sheet compartido como lector. Se implementa como aplicación web:
+ * Ejecutar como "Yo", acceso "Cualquier usuario".
  * Solo responde con datos si quien pide trae un login de Google válido
  * y su correo está en la pestaña "Accesos".
  */
 
 // El mismo ID de cliente que va en config.js de la página.
 var GOOGLE_CLIENT_ID = '496831651340-pv5r04959eofha2iqjrbe9l1q570e7di.apps.googleusercontent.com';
+
+// ID del Sheet con el programa del viaje.
+var SHEET_ID = '1OuKuMfCd-jfLPTTMrenmNNzsfpkUWCN51yPGFjAAONs';
 
 // Columnas que no se envían a la página.
 var OCULTAS = { Traslados: ['Reserva'] };
@@ -54,7 +58,7 @@ function verificarLogin_(credential) {
 }
 
 function estaAutorizado_(correo) {
-  var hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Accesos');
+  var hoja = libro_().getSheetByName('Accesos');
   if (!hoja || hoja.getLastRow() < 2) return false;
   var correos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 1).getDisplayValues();
   for (var i = 0; i < correos.length; i++) {
@@ -65,7 +69,7 @@ function estaAutorizado_(correo) {
 
 /** Lee una pestaña como lista de objetos, usando la fila 1 como nombres. */
 function leerPestana_(nombre) {
-  var hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nombre);
+  var hoja = libro_().getSheetByName(nombre);
   if (!hoja || hoja.getLastRow() < 2) return [];
   var valores = hoja.getDataRange().getDisplayValues();
   var titulos = valores[0];
@@ -83,6 +87,19 @@ function leerPestana_(nombre) {
     if (tieneAlgo) filas.push(fila);
   }
   return filas;
+}
+
+var libroAbierto_ = null;
+function libro_() {
+  if (!libroAbierto_) libroAbierto_ = SpreadsheetApp.openById(SHEET_ID);
+  return libroAbierto_;
+}
+
+/** Ejecuta esta función una vez desde el editor para autorizar los permisos. */
+function autorizar() {
+  libro_().getName();
+  UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=x', { muteHttpExceptions: true });
+  Logger.log('Permisos listos.');
 }
 
 function responder_(objeto) {
