@@ -129,6 +129,9 @@ body.is-dragging .day:not(:disabled){cursor:copy}
 .agenda .t{font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
 .agenda .x{font-size:15px;line-height:1.4;min-width:0;overflow-wrap:anywhere}
 .agenda li.star .t{color:var(--warn)}
+.agenda li.star{cursor:grab}
+.agenda li.star .grip{width:26px;height:26px;margin:-4px 0 0 0}
+.agenda li.dragging{opacity:.35}
 .agenda .empty{color:var(--muted)}
 .info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0}
 .info>div{background:#F7F9FC;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -560,7 +563,11 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     var plans = impFor(day.key);
     plans.forEach(function (it) {
       var li = el('li', 'star');
-      li.appendChild(el('span', 't', '★'));
+      li.setAttribute('data-drag-id', it.id);
+      var gs = el('span', 't');
+      var gg = el('span', 'grip', '\u2807'); gg.setAttribute('aria-hidden', 'true'); gg.title = 'Arrastrar a otro día o de vuelta a la lista';
+      gs.appendChild(gg);
+      li.appendChild(gs);
       var x = el('span', 'x');
       x.appendChild(el('strong', null, it.row['Nombre']));
       if (it.row['Duración']) x.appendChild(document.createTextNode(' · ' + it.row['Duración']));
@@ -573,7 +580,7 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     });
     if (!lines.length && !plans.length) { var e = el('li'); e.appendChild(el('span', 't', '')); e.appendChild(el('span', 'x empty', 'Sin planes todavía.')); ol.appendChild(e); }
     box.appendChild(ol);
-    if ((state.imp || []).length) box.appendChild(el('p', 'drophint', 'Arrastra aquí una tarjeta de imperdibles, o usa «Agregar a un día» en la tarjeta.'));
+    if ((state.imp || []).length) box.appendChild(el('p', 'drophint', plans.length ? 'Arrastra aquí más tarjetas de imperdibles. Para sacar un plan, usa «Quitar» o arrástralo de vuelta a la lista de abajo.' : 'Arrastra aquí una tarjeta de imperdibles, o usa «Agregar a un día» en la tarjeta.'));
 
     var dl = el('dl', 'info');
     field(dl, 'Traslado', row['Transporte'] || 'Sin traslados');
@@ -682,7 +689,7 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     var cities = impCities();
     if (!state.cityTab || !cities.some(function (c) { return sameCity(c, state.cityTab); })) state.cityTab = cities[0];
     cities.forEach(function (c) {
-      var t = el('button', 'tab', c + ' (' + state.imp.filter(function (it) { return sameCity(it.city, c); }).length + ')');
+      var t = el('button', 'tab', c + ' (' + state.imp.filter(function (it) { return sameCity(it.city, c) && !it.dayKey; }).length + ')');
       t.type = 'button';
       var on = sameCity(c, state.cityTab);
       t.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -691,10 +698,13 @@ body.is-dragging .day:not(:disabled){cursor:copy}
       tabs.appendChild(t);
     });
     var st = styleFor(state.cityTab);
-    state.imp.filter(function (it) { return sameCity(it.city, state.cityTab); }).forEach(function (it) {
+    var free = state.imp.filter(function (it) { return sameCity(it.city, state.cityTab) && !it.dayKey; });
+    if (!free.length) list.appendChild(el('p', 'drophint', 'Todas las tarjetas de ' + state.cityTab + ' ya están en el calendario. Si quitas una de un día, vuelve a aparecer aquí.'));
+    free.forEach(function (it) {
       var r = it.row;
       var a = el('article', 'imp' + (it.dayKey ? ' assigned' : ''));
       a.setAttribute('data-id', it.id);
+      a.setAttribute('data-drag-id', it.id);
       if (it.dayKey) a.style.borderColor = st.line === '#FFFFFF' ? '#12233D' : st.line;
       var top = el('div', 'imp-top');
       var g = el('span', 'grip', '\u2807');
@@ -782,11 +792,11 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     }
   }
   function onPointerDown(e) {
-    var card = e.target.closest && e.target.closest('.imp');
+    var card = e.target.closest && e.target.closest('[data-drag-id]');
     if (!card || e.button > 0) return;
     if (e.target.closest('a,button,select,option,input')) return;
     if (e.pointerType !== 'mouse' && !e.target.closest('.grip')) return;
-    drag = { id: card.getAttribute('data-id'), card: card, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, active: false, hover: null, pid: e.pointerId };
+    drag = { id: card.getAttribute('data-drag-id'), card: card, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, active: false, hover: null, pid: e.pointerId };
     if (e.pointerType !== 'mouse') e.preventDefault();
   }
   function onPointerMove(e) {
