@@ -29,6 +29,9 @@ function doPost(e) {
     if (!estaAutorizado_(correo)) {
       return responder_({ ok: false, error: 'no_autorizado', correo: correo });
     }
+    if (pedido.accion === 'asignar') {
+      return responder_(asignar_(pedido.id, pedido.fecha));
+    }
     return responder_({
       ok: true,
       correo: correo,
@@ -66,6 +69,39 @@ function estaAutorizado_(correo) {
     if (String(correos[i][0]).trim().toLowerCase() === correo) return true;
   }
   return false;
+}
+
+/**
+ * Asigna un imperdible a un día (dd/mm/aaaa), o lo deja sin día si fecha va vacía.
+ * Solo escribe la columna "Día" de la pestaña "Imperdibles".
+ */
+function asignar_(id, fecha) {
+  id = String(id || '').trim();
+  fecha = String(fecha || '').trim();
+  if (!id) return { ok: false, error: 'sin_id' };
+  if (fecha && !/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) return { ok: false, error: 'fecha_invalida' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var hoja = libro_().getSheetByName('Imperdibles');
+    if (!hoja) return { ok: false, error: 'sin_hoja' };
+    var datos = hoja.getDataRange().getDisplayValues();
+    var titulos = datos[0].map(function (t) { return String(t).trim(); });
+    var cId = titulos.indexOf('ID');
+    var cDia = titulos.indexOf('Día');
+    if (cId === -1 || cDia === -1) return { ok: false, error: 'sin_columnas' };
+    for (var i = 1; i < datos.length; i++) {
+      if (String(datos[i][cId]).trim() === id) {
+        var celda = hoja.getRange(i + 1, cDia + 1);
+        celda.setNumberFormat('@');
+        celda.setValue(fecha);
+        return { ok: true, guardado: true, id: id, fecha: fecha };
+      }
+    }
+    return { ok: false, error: 'no_encontrado' };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // Pestañas que nunca se envían a la página.
