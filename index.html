@@ -31,7 +31,6 @@ button{font-family:inherit}
 .count{background:#FFD9B8;color:#7A2E00;border-radius:16px;padding:12px 18px;display:flex;flex-direction:column;gap:2px}
 .count small{font-size:13px;font-weight:600}
 .count .big{font-size:2rem;line-height:1}
-.route{flex-direction:row;flex-wrap:wrap;gap:8px;align-items:center;padding:16px 20px;font-size:15px;font-weight:600}
 .pill{border-radius:999px;padding:6px 12px;border:1.5px solid transparent}
 .arrow{color:var(--muted)}
 .cols{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
@@ -77,9 +76,24 @@ button{font-family:inherit}
 .mapcap{font-size:14px;font-weight:600}
 .cost{display:flex;justify-content:space-between;gap:12px;font-size:15px}
 .cost .amt{font-weight:600;white-space:nowrap}
-.totals{display:flex;flex-wrap:wrap;gap:10px}
-.total{background:#E8EDF5;border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
-.total b{font-family:'Bricolage Grotesque',Inter,sans-serif;font-size:1.25rem}
+.cost-l{display:flex;flex-direction:column;gap:2px;min-width:0}
+.maplink{font-size:14px;font-weight:600}
+.ctable{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(96px,auto);gap:12px;align-items:center;padding:12px 14px;font-size:15px}
+.crow .cn{text-align:center;color:var(--muted)}
+.crow .ct{text-align:right;font-weight:600;white-space:nowrap}
+.chead{background:#E8EDF5;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.chead .ct,.chead .cn{font-weight:600}
+.cday{border-top:1px solid var(--line)}
+.cday>summary{cursor:pointer;list-style:none;min-height:44px}
+.cday>summary::-webkit-details-marker{display:none}
+.cday>summary:hover{background:#F7F9FC}
+.cd{display:flex;align-items:center;gap:8px;font-weight:600}
+.chev{width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);flex:none;transition:transform .15s}
+.cday[open] .chev{transform:rotate(45deg)}
+.cdet{padding:4px 14px 14px 30px;display:flex;flex-direction:column;gap:12px;background:#FAFBFD}
+.cfoot{border-top:2px solid var(--ink);font-weight:600}
+.cfoot .ct{font-family:'Bricolage Grotesque',Inter,sans-serif;font-size:1.15rem}
 .foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-size:14px;color:var(--muted)}
 </style>
 </head>
@@ -106,8 +120,6 @@ button{font-family:inherit}
     <div class="count"><small id="count-small"></small><span id="count-big" class="big"></span></div>
   </header>
 
-  <section id="route" class="card route" aria-label="Ruta"></section>
-
   <div class="cols">
     <section class="card cal">
       <div class="head"><h2>Calendario</h2><span class="hint">Toca un día para ver el detalle</span></div>
@@ -129,9 +141,8 @@ button{font-family:inherit}
   </section>
 
   <section id="cost-card" class="card" hidden>
-    <div class="head"><h2>Costos</h2><span class="hint">Estimados y reales, por moneda</span></div>
-    <div id="cost-totals" class="totals"></div>
-    <div id="cost-list" class="cards"></div>
+    <div class="head"><h2>Costos</h2><span class="hint">En dólares. Toca un día para ver el detalle</span></div>
+    <div id="cost-table" class="ctable"></div>
   </section>
 
   <section class="card">
@@ -276,7 +287,8 @@ button{font-family:inherit}
   function money(n, cur) {
     var dec = /^(CLP|JPY)$/i.test(cur) ? 0 : 2;
     var txt = Math.abs(n % 1) < 0.005 || dec === 0 ? Math.round(n).toLocaleString('es-CL') : n.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return (cur ? cur + ' ' : '') + txt;
+    if (!cur || /^USD$/i.test(cur)) return 'US$ ' + txt;
+    return cur + ' ' + txt;
   }
 
   function mapPos(name) {
@@ -353,17 +365,6 @@ button{font-family:inherit}
       $('count-small').textContent = 'Viaje';
       $('count-big').textContent = 'Terminado';
     }
-  }
-
-  function renderRoute() {
-    var box = $('route'); clear(box);
-    var seq = [CASA];
-    state.days.forEach(function (d) { if (d.place && seq[seq.length - 1] !== d.place) seq.push(d.place); });
-    seq.push(CASA);
-    seq.forEach(function (name, i) {
-      if (i) { var a = el('span', 'arrow', '→'); a.setAttribute('aria-hidden', 'true'); box.appendChild(a); }
-      var p = el('span', 'pill', name); paint(p, styleFor(name)); box.appendChild(p);
-    });
   }
 
   function renderCalendar() {
@@ -520,37 +521,77 @@ button{font-family:inherit}
     });
   }
 
+  function routeLink(url) {
+    if (!/^https:\/\/(www\.)?google\.[a-z.]+\/maps/i.test(url || '')) return null;
+    var a = el('a', 'maplink', 'Ver ruta en Google Maps');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    return a;
+  }
+
   function costLine(c) {
     var line = el('div', 'cost');
-    line.appendChild(el('span', null, c['Concepto'] + (c['Estado'] ? ' (' + c['Estado'].toLowerCase() + ')' : '')));
+    var left = el('span', 'cost-l');
+    left.appendChild(el('span', null, c['Concepto'] + (c['Estado'] ? ' (' + c['Estado'].toLowerCase() + ')' : '')));
+    var r = routeLink(c['Ruta']);
+    if (r) left.appendChild(r);
+    line.appendChild(left);
     line.appendChild(el('span', 'amt', money(num(c['Monto']), c['Moneda'])));
     return line;
   }
 
-  function renderCosts() {
-    var card = $('cost-card'), totals = $('cost-totals'), list = $('cost-list');
-    clear(totals); clear(list);
-    card.hidden = !state.costos.length;
-    if (!state.costos.length) return;
+  function sumText(rows) {
     var sum = {}, order = [];
-    state.costos.forEach(function (c) {
-      var cur = c['Moneda'] || '';
+    rows.forEach(function (c) {
+      var cur = (c['Moneda'] || 'USD').toUpperCase();
       if (!(cur in sum)) { sum[cur] = 0; order.push(cur); }
       sum[cur] += num(c['Monto']);
     });
-    order.forEach(function (cur) {
-      var t = el('div', 'total'); t.appendChild(el('span', 'when', 'Total en ' + (cur || 'sin moneda'))); t.appendChild(el('b', null, money(sum[cur], cur)));
-      totals.appendChild(t);
-    });
+    return order.map(function (cur) { return money(sum[cur], cur); }).join(' + ');
+  }
+
+  function renderCosts() {
+    var card = $('cost-card'), box = $('cost-table');
+    clear(box);
+    card.hidden = !state.costos.length;
+    if (!state.costos.length) return;
+    var groups = {}, order = [];
     state.costos.forEach(function (c) {
-      var it = el('article', 'item');
       var d = parseDate(c['Fecha']);
-      it.appendChild(el('span', 'when', [d ? shortDate(d) : '', c['Categoría'] || ''].filter(Boolean).join(' · ')));
-      it.appendChild(el('span', 'title', c['Concepto']));
-      it.appendChild(el('span', 'route-t', money(num(c['Monto']), c['Moneda'])));
-      if (c['Estado']) { var tg = el('span', 'tags'); tg.appendChild(el('span', 'tag ' + (/pagado/i.test(c['Estado']) ? '' : /cotizado/i.test(c['Estado']) ? 'prog' : 'warn'), c['Estado'])); it.appendChild(tg); }
-      list.appendChild(it);
+      var k = d ? keyOf(d) : 'sin-fecha';
+      if (!groups[k]) { groups[k] = { date: d, rows: [] }; order.push(k); }
+      groups[k].rows.push(c);
     });
+    order.sort(function (x, y) {
+      var a = groups[x].date, b = groups[y].date;
+      if (!a) return 1; if (!b) return -1; return a - b;
+    });
+    var head = el('div', 'crow chead');
+    head.appendChild(el('span', null, 'Día')); head.appendChild(el('span', 'cn', 'Gastos')); head.appendChild(el('span', 'ct', 'Total'));
+    box.appendChild(head);
+    order.forEach(function (k) {
+      var g = groups[k];
+      var det = el('details', 'cday');
+      var sum = el('summary', 'crow');
+      var dayLbl = el('span', 'cd');
+      dayLbl.appendChild(el('span', 'chev'));
+      dayLbl.lastChild.setAttribute('aria-hidden', 'true');
+      dayLbl.appendChild(document.createTextNode(g.date ? longDate(g.date) : 'Sin fecha'));
+      sum.appendChild(dayLbl);
+      sum.appendChild(el('span', 'cn', String(g.rows.length)));
+      sum.appendChild(el('span', 'ct', sumText(g.rows)));
+      det.appendChild(sum);
+      var inner = el('div', 'cdet');
+      g.rows.forEach(function (c) {
+        var line = costLine(c);
+        if (c['Categoría']) line.firstChild.insertBefore(el('span', 'when', c['Categoría']), line.firstChild.firstChild);
+        inner.appendChild(line);
+      });
+      det.appendChild(inner);
+      box.appendChild(det);
+    });
+    var foot = el('div', 'crow cfoot');
+    foot.appendChild(el('span', null, 'Total del viaje')); foot.appendChild(el('span', 'cn', String(state.costos.length))); foot.appendChild(el('span', 'ct', sumText(state.costos)));
+    box.appendChild(foot);
   }
 
   function logItem(e, withDate) {
@@ -583,7 +624,7 @@ button{font-family:inherit}
     prepare(data);
     var todayKey = keyOf(new Date());
     state.sel = state.byKey[todayKey] ? todayKey : (state.days[0] ? state.days[0].key : null);
-    renderHero(); renderRoute(); renderCalendar(); renderDetail(); renderPend(); renderTras(); renderCosts(); renderBita();
+    renderHero(); renderCalendar(); renderDetail(); renderPend(); renderTras(); renderCosts(); renderBita();
     $('who').textContent = state.email ? 'Entraste como ' + state.email : '';
     $('gate').hidden = true;
     $('app').hidden = false;
