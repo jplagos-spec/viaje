@@ -119,6 +119,35 @@ button{font-family:inherit}
 body.is-dragging{cursor:grabbing}
 body.is-dragging .day:not(:disabled){cursor:copy}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;background:var(--ink);color:#fff;border-radius:12px;padding:12px 16px;font-size:14px;max-width:min(92vw,420px);box-shadow:0 8px 24px rgba(18,35,61,.3)}
+.dhead{display:flex;flex-direction:column;gap:8px}
+.dhead .meta{display:flex;flex-wrap:wrap;gap:6px}
+.agenda{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-left:2px solid var(--line);margin-left:22px}
+.agenda li{position:relative;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:8px 0 8px 14px}
+.agenda li::before{content:"";position:absolute;left:-6px;top:15px;width:10px;height:10px;border-radius:50%;background:var(--card);border:2px solid #7C8AA0}
+.agenda li.timed::before{background:var(--ink);border-color:var(--ink)}
+.agenda li.star::before{background:var(--warn);border-color:var(--warn)}
+.agenda .t{font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
+.agenda .x{font-size:15px;line-height:1.4;min-width:0;overflow-wrap:anywhere}
+.agenda li.star .t{color:var(--warn)}
+.agenda .empty{color:var(--muted)}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0}
+.info>div{background:#F7F9FC;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.info dd{overflow-wrap:anywhere}
+.mapwrap{border-top:1px solid var(--line);padding-top:12px}
+.alist{display:flex;flex-direction:column;gap:8px}
+.aday{all:unset;box-sizing:border-box;display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--card)}
+.aday:hover{background:#F7F9FC}
+.aday:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.aday[aria-current="true"]{border:2px solid var(--warn);padding:11px}
+.adate{border-radius:10px;padding:6px 4px;text-align:center;display:flex;flex-direction:column;gap:2px;border:1.5px solid transparent}
+.adate .w{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.adate .n{font-family:'Bricolage Grotesque',Inter,sans-serif;font-size:1.5rem;font-weight:700;line-height:1}
+.adate .m{font-size:11px}
+.abody{display:flex;flex-direction:column;gap:4px;min-width:0}
+.abody .c{font-weight:700;font-size:15px}
+.abody .l{font-size:14px;color:var(--ink);display:flex;gap:8px}
+.abody .l b{font-variant-numeric:tabular-nums;min-width:40px}
+.abody .s{font-size:13px;color:var(--muted)}
 .foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-size:14px;color:var(--muted)}
 </style>
 </head>
@@ -159,6 +188,11 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     <div class="head"><h2>Imperdibles</h2><span class="hint">Arrastra una tarjeta a un día del calendario</span></div>
     <div id="imp-tabs" class="tabs" role="group" aria-label="Ciudad"></div>
     <div id="imp-list" class="impgrid" data-drop="none"></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Agenda del viaje</h2><span class="hint">Toca un día para ver su detalle arriba</span></div>
+    <div id="agenda" class="alist"></div>
   </section>
 
   <section class="card">
@@ -465,7 +499,37 @@ body.is-dragging .day:not(:disabled){cursor:copy}
   }
 
   function field(dl, label, value) {
-    var w = el('div'); w.appendChild(el('dt', null, label)); w.appendChild(el('dd', null, value)); dl.appendChild(w);
+    var w = el('div'); w.appendChild(el('dt', 'label', label));
+    var dd = el('dd'); linkify(dd, value); w.appendChild(dd); dl.appendChild(w);
+    return w;
+  }
+
+  var URL_RE = /(https?:\/\/[^\s]+)/g;
+  function linkify(node, text) {
+    String(text || '').split(URL_RE).forEach(function (part, i) {
+      if (i % 2 === 1) {
+        var host = part.replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
+        var a = el('a', null, 'Ver link (' + host + ')');
+        a.href = part; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        node.appendChild(a);
+      } else if (part) {
+        node.appendChild(document.createTextNode(part));
+      }
+    });
+  }
+  function stripUrls(text) { return String(text || '').replace(URL_RE, '').replace(/\s+\./g, '.').trim(); }
+
+  /** Separa el plan en líneas, con hora si empiezan con HH:MM. */
+  function planLines(text) {
+    return String(text || '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+      var m = /^(\d{1,2}:\d{2})\s*(?:aprox\.?)?\s+(.*)$/i.exec(l);
+      return m ? { t: m[1] + (/aprox/i.test(l.slice(0, 14)) ? '*' : ''), x: m[2] } : { t: '', x: l };
+    });
+  }
+  function hotelFor(day) {
+    var h = null;
+    state.aloj.forEach(function (a) { if (day.date >= a.desde && day.date < a.hasta) h = a.row; });
+    return h;
   }
 
   function renderDetail() {
@@ -474,52 +538,62 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     if (day) box.setAttribute('data-drop', day.key); else box.removeAttribute('data-drop');
     if (!day) { box.appendChild(el('p', 'muted', 'Elige un día del calendario.')); return; }
     var row = day.row;
-    var top = el('div'); top.style.display = 'flex'; top.style.flexDirection = 'column'; top.style.gap = '8px';
-    var chip = el('span', 'chip', row['Ciudad'] || 'Por definir'); paint(chip, day.st);
-    top.appendChild(chip); top.appendChild(el('h2', null, longDate(day.date)));
+
+    var top = el('div', 'dhead');
+    var meta = el('div', 'meta');
+    var chip = el('span', 'chip', row['Ciudad'] || 'Por definir'); paint(chip, day.st); meta.appendChild(chip);
+    if (day.con) meta.appendChild(el('span', 'tag', 'Con ' + day.con.toLowerCase()));
+    top.appendChild(meta);
+    top.appendChild(el('h2', null, longDate(day.date)));
     box.appendChild(top);
-    box.appendChild(renderMap(day));
-    var dl = el('dl');
-    field(dl, 'Plan del día', row['Plan del día'] || 'Por definir');
+
+    box.appendChild(el('p', 'label', 'Agenda'));
+    var ol = el('ol', 'agenda');
+    var lines = planLines(row['Plan del día']);
+    lines.forEach(function (ln) {
+      var li = el('li', ln.t ? 'timed' : '');
+      li.appendChild(el('span', 't', ln.t.replace('*', '')));
+      var x = el('span', 'x'); linkify(x, ln.x + (ln.t.indexOf('*') > -1 ? ' (aprox.)' : '')); li.appendChild(x);
+      li.appendChild(el('span'));
+      ol.appendChild(li);
+    });
+    var plans = impFor(day.key);
+    plans.forEach(function (it) {
+      var li = el('li', 'star');
+      li.appendChild(el('span', 't', '★'));
+      var x = el('span', 'x');
+      x.appendChild(el('strong', null, it.row['Nombre']));
+      if (it.row['Duración']) x.appendChild(document.createTextNode(' · ' + it.row['Duración']));
+      li.appendChild(x);
+      var q = el('button', 'linkbtn', 'Quitar'); q.type = 'button';
+      q.setAttribute('aria-label', 'Quitar ' + it.row['Nombre'] + ' de este día');
+      q.addEventListener('click', function () { assign(it.id, null); });
+      li.appendChild(q);
+      ol.appendChild(li);
+    });
+    if (!lines.length && !plans.length) { var e = el('li'); e.appendChild(el('span', 't', '')); e.appendChild(el('span', 'x empty', 'Sin planes todavía.')); ol.appendChild(e); }
+    box.appendChild(ol);
+    if ((state.imp || []).length) box.appendChild(el('p', 'drophint', 'Arrastra aquí una tarjeta de imperdibles, o usa «Agregar a un día» en la tarjeta.'));
+
+    var dl = el('dl', 'info');
     field(dl, 'Traslado', row['Transporte'] || 'Sin traslados');
-    var hotel = null;
-    state.aloj.forEach(function (a) { if (day.date >= a.desde && day.date < a.hasta) hotel = a.row; });
+    var hotel = hotelFor(day);
     if (hotel) {
-      var w = el('div'); w.appendChild(el('dt', null, 'Dónde dormimos'));
-      var lines = [hotel['Hotel'] + (hotel['Estado'] ? ' (' + hotel['Estado'].toLowerCase() + ')' : '')];
-      if (hotel['Dirección']) lines.push(hotel['Dirección']);
-      if (hotel['Habitaciones']) lines.push(hotel['Habitaciones']);
-      if (hotel['Check-in']) lines.push('Check-in desde las ' + hotel['Check-in'] + (hotel['Check-out'] ? ', salida hasta las ' + hotel['Check-out'] : ''));
-      if (hotel['Precio']) lines.push('Precio: ' + money(num(hotel['Precio']), hotel['Moneda']));
-      w.appendChild(el('dd', null, lines.join('\n')));
+      var lines2 = [hotel['Hotel'] + (hotel['Estado'] ? ' (' + hotel['Estado'].toLowerCase() + ')' : '')];
+      if (hotel['Dirección']) lines2.push(hotel['Dirección']);
+      if (hotel['Habitaciones']) lines2.push(hotel['Habitaciones']);
+      if (hotel['Check-in']) lines2.push('Check-in desde las ' + hotel['Check-in'] + (hotel['Check-out'] ? ', salida hasta las ' + hotel['Check-out'] : ''));
+      var w = field(dl, 'Dónde dormimos', lines2.join('\n'));
       if (/^https:\/\//i.test(hotel['Link'] || '')) {
-        var dd2 = el('dd'); var ha = el('a', null, 'Ver el hotel'); ha.href = hotel['Link']; ha.target = '_blank'; ha.rel = 'noopener noreferrer';
+        var dd2 = el('dd'); var ha = el('a', null, 'Ver el alojamiento'); ha.href = hotel['Link']; ha.target = '_blank'; ha.rel = 'noopener noreferrer';
         dd2.appendChild(ha); w.appendChild(dd2);
       }
-      dl.appendChild(w);
     } else {
       field(dl, 'Dónde dormimos', row['Alojamiento'] || 'Sin dato');
     }
-    if (day.con) field(dl, 'Con quién', day.con);
     if (row['Notas']) field(dl, 'Notas', row['Notas']);
     box.appendChild(dl);
-    if ((state.imp || []).length) {
-      box.appendChild(el('p', 'label', 'Planes del día'));
-      var plans = impFor(day.key);
-      plans.forEach(function (it) {
-        var pi = el('div', 'plan-item');
-        var r1 = el('div', 'row');
-        r1.appendChild(el('strong', null, it.row['Nombre']));
-        var q = el('button', 'linkbtn', 'Quitar'); q.type = 'button';
-        q.setAttribute('aria-label', 'Quitar ' + it.row['Nombre'] + ' de este día');
-        q.addEventListener('click', function () { assign(it.id, null); });
-        r1.appendChild(q);
-        pi.appendChild(r1);
-        if (it.row['Duración']) pi.appendChild(el('span', 'sub', it.row['Duración']));
-        box.appendChild(pi);
-      });
-      box.appendChild(el('p', 'drophint', plans.length ? 'Puedes arrastrar más tarjetas de imperdibles a este día.' : 'Arrastra aquí una tarjeta de imperdibles, o usa «Agregar a un día» en la tarjeta.'));
-    }
+
     var entries = (state.data.bitacora || []).filter(function (e) {
       var d = parseDate(e['Fecha']); return d && keyOf(d) === day.key;
     });
@@ -527,12 +601,54 @@ body.is-dragging .day:not(:disabled){cursor:copy}
       box.appendChild(el('p', 'label', 'Lo que pasó'));
       entries.forEach(function (e) { box.appendChild(logItem(e, false)); });
     }
+    var mw = el('div', 'mapwrap'); mw.appendChild(renderMap(day)); box.appendChild(mw);
+  }
+
+  function renderAgenda() {
+    var box = $('agenda'); clear(box);
+    state.days.forEach(function (day) {
+      var b = el('button', 'aday'); b.type = 'button';
+      b.setAttribute('data-key', day.key);
+      b.setAttribute('data-drop', day.key);
+      if (day.key === state.sel) b.setAttribute('aria-current', 'true');
+      var dt = el('span', 'adate'); paint(dt, day.st);
+      dt.appendChild(el('span', 'w', SEM[day.date.getDay()].slice(0, 3)));
+      dt.appendChild(el('span', 'n', day.date.getDate()));
+      dt.appendChild(el('span', 'm', MES[day.date.getMonth()].slice(0, 3)));
+      b.appendChild(dt);
+      var body = el('span', 'abody');
+      body.appendChild(el('span', 'c', day.row['Ciudad'] || 'Por definir'));
+      planLines(day.row['Plan del día']).forEach(function (ln) {
+        var l = el('span', 'l');
+        if (ln.t) l.appendChild(el('b', null, ln.t.replace('*', '')));
+        l.appendChild(el('span', null, stripUrls(ln.x)));
+        body.appendChild(l);
+      });
+      impFor(day.key).forEach(function (it) {
+        var l = el('span', 'l'); l.appendChild(el('b', null, '★')); l.appendChild(el('span', null, it.row['Nombre'])); body.appendChild(l);
+      });
+      var extra = [];
+      var h = hotelFor(day);
+      var sleep = h ? h['Hotel'] : stripUrls(day.row['Alojamiento']);
+      if (sleep) extra.push('Noche: ' + sleep);
+      if (day.con) extra.push('Con ' + day.con.toLowerCase());
+      if (extra.length) body.appendChild(el('span', 's', extra.join(' · ')));
+      b.appendChild(body);
+      b.addEventListener('click', function () {
+        select(day.key);
+        var d = $('detail');
+        if (d.scrollIntoView) d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      box.appendChild(b);
+    });
   }
 
   function select(key) {
     state.sel = key;
     var btns = $('cal').querySelectorAll('button.day[data-key]');
     for (var i = 0; i < btns.length; i++) btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-key') === key ? 'true' : 'false');
+    var ab = $('agenda').querySelectorAll('.aday');
+    for (var j = 0; j < ab.length; j++) { if (ab[j].getAttribute('data-key') === key) ab[j].setAttribute('aria-current', 'true'); else ab[j].removeAttribute('aria-current'); }
     renderDetail();
     var day = state.byKey[key];
     var c = day && (day.place || (day.transit ? null : day.to));
@@ -703,7 +819,7 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { t.hidden = true; }, 4500);
   }
-  function rerenderPlans() { renderCalendar(); renderDetail(); renderImp(); }
+  function rerenderPlans() { renderCalendar(); renderDetail(); renderImp(); renderAgenda(); }
 
   function assign(id, key) {
     var it = impById(id);
@@ -905,7 +1021,7 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     prepare(data);
     var todayKey = keyOf(new Date());
     state.sel = state.byKey[todayKey] ? todayKey : (state.days[0] ? state.days[0].key : null);
-    state.cityTab = null; renderHero(); renderCalendar(); renderDetail(); renderImp(); renderPend(); renderVisas(); renderTras(); renderCosts(); renderBita();
+    state.cityTab = null; renderHero(); renderCalendar(); renderDetail(); renderImp(); renderAgenda(); renderPend(); renderVisas(); renderTras(); renderCosts(); renderBita();
     if (state.sel) select(state.sel);
     $('who').textContent = state.email ? 'Entraste como ' + state.email : '';
     $('gate').hidden = true;
