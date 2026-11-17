@@ -188,7 +188,7 @@ body.is-dragging .day:not(:disabled){cursor:copy}
   </div>
 
   <section id="imp-card" class="card" hidden>
-    <div class="head"><h2>Imperdibles</h2><span class="hint">Arrastra una tarjeta a un día del calendario</span></div>
+    <h2>Imperdibles</h2>
     <div id="imp-tabs" class="tabs" role="group" aria-label="Ciudad"></div>
     <div id="imp-list" class="impgrid" data-drop="none"></div>
   </section>
@@ -580,7 +580,6 @@ body.is-dragging .day:not(:disabled){cursor:copy}
     });
     if (!lines.length && !plans.length) { var e = el('li'); e.appendChild(el('span', 't', '')); e.appendChild(el('span', 'x empty', 'Sin planes todavía.')); ol.appendChild(e); }
     box.appendChild(ol);
-    if ((state.imp || []).length) box.appendChild(el('p', 'drophint', plans.length ? 'Arrastra aquí más tarjetas de imperdibles. Para sacar un plan, usa «Quitar» o arrástralo de vuelta a la lista de abajo.' : 'Arrastra aquí una tarjeta de imperdibles, o usa «Agregar a un día» en la tarjeta.'));
 
     var dl = el('dl', 'info');
     field(dl, 'Traslado', row['Transporte'] || 'Sin traslados');
